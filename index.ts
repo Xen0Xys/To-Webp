@@ -1,8 +1,14 @@
-import { readdirSync } from "fs";
-import { join } from "path";
+import { readdirSync, statSync } from "fs";
+import { join, relative } from "path";
 import sharp from "sharp";
 
-const files: string[] = readdirSync(join(__dirname, "images")).filter((fileName: string) => fileName !== ".gitkeep");
+const listFilesRecursive = (dir: string, baseDir: string = dir): string[] =>
+    readdirSync(dir).flatMap(file => {
+        const fullPath: string = join(dir, file);
+        return statSync(fullPath).isDirectory() ? listFilesRecursive(fullPath, baseDir) : file !== ".gitkeep" ? [relative(baseDir, fullPath)] : [];
+    });
+
+const files: string[] = listFilesRecursive(join(__dirname, "images"));
 
 while(files.length !== 0){
     await Promise.all(files.splice(0, 5).map(async (fileName: string) => {
